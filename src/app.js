@@ -1,4 +1,3 @@
-// Aplicación web mínima: lista de tareas en memoria + endpoints de salud y métricas.
 const express = require('express');
 const path = require('path');
 
@@ -10,7 +9,6 @@ function createApp() {
   const tareas = [];
   const metricas = { solicitudes: 0, errores: 0, inicio: Date.now() };
 
-  // Registro (log) simple de cada solicitud: base para el monitoreo.
   app.use((req, res, next) => {
     metricas.solicitudes++;
     const t0 = Date.now();
@@ -51,3 +49,18 @@ function createApp() {
 }
 
 module.exports = { createApp };
+
+function sumar(a, b) {
+  return a + b;
+}
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+module.exports = app;
+module.exports.sumar = sumar;

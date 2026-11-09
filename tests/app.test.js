@@ -40,3 +40,18 @@ describe('API de tareas', () => {
     expect(r.body.solicitudes).toBeGreaterThanOrEqual(2);
   });
 });
+
+function sumar(a, b) {
+  return a + b;
+}
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    environment: process.env.NODE_ENV || 'development',
+    timestamp: new Date().toISOString()
+  });
+});
+
+module.exports = app;
+module.exports.sumar = sumar;

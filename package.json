@@ -5,7 +5,7 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js",
-    "test": "jest --coverage",
+    "test": "jest --coverage --watchAll=false",
     "lint": "node --check src/app.js && node --check src/server.js"
   },
   "license": "MIT",

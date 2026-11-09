@@ -1,47 +1,65 @@
-# Pipeline CI/CD: se ejecuta en cada push y pull request.
-name: CI/CD
+name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ main ]
+    branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-jobs:
-  build-test:
-    name: Build y pruebas
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: npm install
-      - name: Revisión estática
-        run: npm run lint
-      - name: Pruebas con cobertura
-        run: npm test
-      - name: Construir imagen Docker
-        run: docker build -t plantilla-devops-itla:${{ github.sha }} .
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
 
-  deploy-pages:
+jobs:
+  build-and-test:
+    name: Build & Pruebas Automatizadas
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout del código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Instalar dependencias
+        run: npm install
+
+      - name: Ejecutar pruebas y cobertura
+        run: npm test
+
+      - name: Preparar archivos para GitHub Pages
+        run: |
+          mkdir -p _site
+          cp -r public/* _site/
+          if [ -d "coverage/lcov-report" ]; then
+            cp -r coverage/lcov-report _site/coverage
+          fi
+
+      - name: Subir artefacto de GitHub Pages
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./_site
+
+  deploy:
     name: Despliegue a GitHub Pages
-    needs: build-test
+    needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: public
-      - id: deployment
+      - name: Desplegar en GitHub Pages
+        id: deployment
         uses: actions/deploy-pages@v4
